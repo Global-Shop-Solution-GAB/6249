@@ -1,0 +1,510 @@
+﻿Program.Sub.ScreenSU.Start
+Gui.F_GLDetail..Create
+Gui.F_GLDetail..Caption("GL Detail by Customer (AR)")
+Gui.F_GLDetail..Size(17190,9945)
+Gui.F_GLDetail..MinX(0)
+Gui.F_GLDetail..MinY(0)
+Gui.F_GLDetail..Position(0,0)
+Gui.F_GLDetail..FontSize(9)
+Gui.F_GLDetail..BackColor(-2147483633)
+Gui.F_GLDetail..MousePointer(0)
+Gui.F_GLDetail..Event(UnLoad,Unload)
+Gui.F_GLDetail..Event(Resize,ResizeScreen)
+Gui.F_GLDetail.GsGCDetail.Create(GsGridControl)
+Gui.F_GLDetail.GsGCDetail.Size(16860,6165)
+Gui.F_GLDetail.GsGCDetail.Position(75,3105)
+Gui.F_GLDetail.frameDate.Create(Frame)
+Gui.F_GLDetail.frameDate.Size(5295,1005)
+Gui.F_GLDetail.frameDate.Position(75,60)
+Gui.F_GLDetail.frameDate.Caption("Date Selection")
+Gui.F_GLDetail.frameDate.FontSize(9)
+Gui.F_GLDetail.lbl1.Create(Label,"Beginning Date",True,1470,255,0,45,300,True,0,"Arial",9,-2147483633,0)
+Gui.F_GLDetail.lbl1.Parent("frameDate")
+Gui.F_GLDetail.dtpBegDate.Create(DatePicker)
+Gui.F_GLDetail.dtpBegDate.Size(1635,285)
+Gui.F_GLDetail.dtpBegDate.Position(60,525)
+Gui.F_GLDetail.dtpBegDate.Parent("frameDate")
+Gui.F_GLDetail.lbl2.Create(Label,"Ending Date",True,1620,255,0,1905,300,True,0,"Arial",9,-2147483633,0)
+Gui.F_GLDetail.lbl2.Parent("frameDate")
+Gui.F_GLDetail.dtpEndDate.Create(DatePicker)
+Gui.F_GLDetail.dtpEndDate.Size(1635,285)
+Gui.F_GLDetail.dtpEndDate.Position(1935,525)
+Gui.F_GLDetail.dtpEndDate.Parent("frameDate")
+Gui.F_GLDetail.cmdRefresh.Create(Button)
+Gui.F_GLDetail.cmdRefresh.Size(1395,540)
+Gui.F_GLDetail.cmdRefresh.Position(3750,300)
+Gui.F_GLDetail.cmdRefresh.Parent("frameDate")
+Gui.F_GLDetail.cmdRefresh.Caption("REFRESH")
+Gui.F_GLDetail.cmdRefresh.FontSize(9)
+Gui.F_GLDetail.cmdRefresh.Event(Click,cmdRefresh_Click)
+Gui.F_GLDetail.frameCust.Create(Frame)
+Gui.F_GLDetail.frameCust.Size(7500,2925)
+Gui.F_GLDetail.frameCust.Position(5505,60)
+Gui.F_GLDetail.frameCust.Caption("Customer")
+Gui.F_GLDetail.frameCust.FontSize(9)
+Gui.F_GLDetail.GsGCCust.Create(GsGridControl)
+Gui.F_GLDetail.GsGCCust.Size(7260,2550)
+Gui.F_GLDetail.GsGCCust.Position(135,270)
+Gui.F_GLDetail.GsGCCust.Parent("frameCust")
+Gui.F_GLDetail.GsGCCust.Event(RowCellClick,GsGCCust_CellClick)
+Gui.F_GLDetail.cmdExcel.Create(Button)
+Gui.F_GLDetail.cmdExcel.Size(1965,630)
+Gui.F_GLDetail.cmdExcel.Position(75,1365)
+Gui.F_GLDetail.cmdExcel.Caption("Excel Export")
+Gui.F_GLDetail.cmdExcel.FontSize(9)
+Gui.F_GLDetail.cmdExcel.Event(Click,cmdExcel_Click)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+V.Global.fMinHeight.Declare(Float,7500)
+V.Global.fMinWidth.Declare(Float,13190)
+V.Global.fRefHeight.Declare
+V.Global.fRefWidth.Declare
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+V.Local.sIconPath.Declare
+F.ODBC.Connection!conx.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass,180)
+
+F.Intrinsic.String.Concat(V.Caller.PluginsDir,"\GAB\GAS\gss2.ico",V.Local.sIconPath)
+Gui.F_GLDetail..Icon(V.Local.sIconPath)
+
+F.Data.DataTable.CreateFromSQL("dtCustomer","conx","select c1.customer as Customer, c1.name_customer as Name, c2.order_curr as Currency from v_customer_master c1 left join v_customer_intl c2 on c1.customer = c2.customer order by c1.customer",True)
+Gui.F_GLDetail.GsGCCust.AddGridviewFromDatatable("gvCust","dtCustomer")
+Gui.F_GLDetail.GsGCCust.MainView("gvCust")
+Gui.F_GLDetail.GsGCCust.SetColumnProperty("gvCust","Customer","HeaderHAlignment","Center")
+Gui.F_GLDetail.GsGCCust.SetColumnProperty("gvCust","Name","HeaderHAlignment","Center")
+Gui.F_GLDetail.GsGCCust.SetColumnProperty("gvCust","Currency","HeaderHAlignment","Center")
+Gui.F_GLDetail.GsGCCust.SetColumnProperty("gvCust","Customer","CellHAlignment","Center")
+Gui.F_GLDetail.GsGCCust.SetColumnProperty("gvCust","Currency","CellHAlignment","Center")
+Gui.F_GLDetail.GsGCCust.SetColumnProperty("gvCust","Customer","MinWidth","70")
+Gui.F_GLDetail.GsGCCust.SetColumnProperty("gvCust","Name","MinWidth","270")
+Gui.F_GLDetail.GsGCCust.SetColumnProperty("gvCust","Currency","MinWidth","60")
+Gui.F_GLDetail.GsGCCust.SetColumnProperty("gvCust","Customer","AllowEdit",False)
+Gui.F_GLDetail.GsGCCust.SetColumnProperty("gvCust","Name","AllowEdit",False)
+Gui.F_GLDetail.GsGCCust.SetColumnProperty("gvCust","Currency","AllowEdit",False)
+
+F.Data.DataTable.CreateFromSQL("dtARGL","Conx","SELECT GL_ACCOUNT as GL FROM AR_EXCL_ACCOUNT WHERE SYS = 'AR' AND SUB_SYS = 'RCV' ORDER BY ACCOUNT_CODE",True)
+Gui.F_GLDetail.GsGCCust.Enabled(False)
+Gui.F_GLDetail.cmdExcel.Visible(False)
+V.Global.fRefHeight.Set(V.Screen.F_GLDetail.Height)
+V.Global.fRefWidth.Set(V.Screen.F_GLDetail.Width)
+F.Intrinsic.Control.CallSub(resizescreen)
+
+Gui.F_GLDetail..Show
+Program.Sub.Main.End
+
+Program.Sub.Unload.Start
+F.Data.DataTable.Close("dtCustomer")
+F.Intrinsic.Control.If(V.DataTable.dtGLData.Exists,=,True)
+	F.Data.DataTable.Close("dtGLData")
+F.Intrinsic.Control.EndIf
+F.Data.DataTable.Close("dtARGL")
+F.ODBC.Connection!conx.Close
+F.Intrinsic.Control.End
+
+Program.Sub.Unload.End
+
+Program.Sub.cmdRefresh_Click.Start
+V.Local.dBegDate.Declare(Date)
+V.Local.dEndDate.Declare(Date)
+V.Local.i1.Declare
+V.Local.iBegYear.Declare
+V.Local.iEndYear.Declare
+V.Local.sGLFilter.Declare(String,"")
+V.Local.sRet1.Declare
+V.Local.sRet2.Declare
+V.Local.sSQL.Declare
+V.Local.sReference.Declare
+
+V.Local.dBegDate.Set(V.Screen.F_GLDetail!dtpBegDate.Value)
+V.Local.dEndDate.Set(V.Screen.F_GLDetail!dtpEndDate.Value)
+
+'Check date selections
+F.Intrinsic.Control.If(V.Local.dEndDate,<,V.Local.dBegDate)
+	F.Intrinsic.UI.Msgbox("End date cannot be earlier than beginning date","GL Detail by Customer (AR)")
+	Gui.F_GLDetail.dtpEndDate.Value(V.Local.dBegDate)
+	F.Intrinsic.Control.ExitSub
+F.Intrinsic.Control.Else
+	F.Intrinsic.Date.GLPeriodFromDate(V.Local.dBegDate,V.Local.sRet1)
+	F.Intrinsic.Date.GLPeriodFromDate(V.Local.dEndDate,V.Local.sRet2)
+	F.Intrinsic.Control.If(V.Local.sRet1,<>,"***NONE***")
+	F.Intrinsic.Control.AndIf(V.Local.sRet2,<>,"***NONE***")
+		F.Intrinsic.String.Split(V.Local.sRet1,"*!*",V.Local.sRet1)
+		F.Intrinsic.String.Split(V.Local.sRet2,"*!*",V.Local.sRet2)
+		'Check if both dates are within the same fiscal period
+		F.Intrinsic.Control.If(V.Local.sRet1(1).Trim,<>,V.Local.sRet2(1).Trim)
+			F.Intrinsic.UI.Msgbox("Selected dates are not within the same fiscal period","GL Detail by Customer (AR)")
+			F.Intrinsic.Control.ExitSub
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.Else
+		F.Intrinsic.UI.Msgbox("Selected date does not have a fiscal calendar yet","GL Detail by Customer (AR)")
+		F.Intrinsic.Control.ExitSub
+	F.Intrinsic.Control.EndIf
+	
+	F.Intrinsic.UI.InvokeWaitDialog("Load GL detail data","GL Detail by Customer (AR)")
+	'Build query and create dtGLData
+'	F.Intrinsic.String.Build("select day(gl.post_date) as D, month(gl.post_date) as M, year(gl.post_date) as Y, cust.name_customer as Name, gl.batch_num as Batch, gl.invoice_no as Reference, case gl.db_cr_flag when 'D' then gl.amount else 0 end as Debit, case gl.db_cr_flag when 'C' then gl.amount else 0 end as Credit, gl.tran_type as ARType, gl.customer as Customer, gl.gl_account as GLAcct from v_gl_detail gl left join v_customer_master cust on gl.customer = cust.customer where gl.appl_type = 'AR' and gl.post_date between '{0}' and '{1}'",V.Local.dBegDate.PervasiveDate,V.Local.dEndDate.PervasiveDate,V.Local.sSQL)
+	F.Intrinsic.String.Build("select day(gl.post_date_sql) as D, month(gl.post_date_sql) as M, year(gl.post_date_sql) as Y, cst.name_customer as Name, gl.batch as Batch, gl.invoice_no as Reference, case gl.db_cr_flag when 0 then gl.amount_cmpny else 0 end as Debit, case gl.db_cr_flag when 1 then gl.amount_cmpny else 0 end as Credit, gl.tran_type as ARType, gl.cust as Customer, gl.gl_number as GLAcct from v_gl_ar_detail gl left join v_customer_master cst on gl.cust = cst.customer where gl.post_date_sql between '{0}' and '{1}'",V.Local.dBegDate.PervasiveDate,V.Local.dEndDate.PervasiveDate,V.Local.sSQL)
+	F.Intrinsic.Control.For(V.Local.i1,0,V.DataTable.dtARGL.RowCount--,1)
+		F.Intrinsic.Control.If(V.Local.sGLFilter.Trim,=,"")
+			F.Intrinsic.String.Build("(gl.gl_number = '{0}'",V.DataTable.dtARGL(V.Local.i1).GL!FieldValTrim,V.Local.sGLFilter)
+		F.Intrinsic.Control.Else
+			F.Intrinsic.String.Build("{0} or gl.gl_number = '{1}'",V.Local.sGLFilter.Trim,V.DataTable.dtARGL(V.Local.i1).GL!FieldValTrim,V.Local.sGLFilter)
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.Next(V.Local.i1)
+	F.Intrinsic.String.Concat(V.Local.sGLFilter,")",V.Local.sGLFilter)
+	F.Intrinsic.String.Build("{0} and {1}",V.Local.sSQL,V.Local.sGLFilter.Trim,V.Local.sSQL)
+	F.Intrinsic.String.Concat(V.Local.sSQL," order by gl.cust,gl.post_date_sql",V.Local.sSQL)
+	F.Intrinsic.Control.If(V.DataTable.dtGLData.Exists,=,True)
+		F.Data.DataTable.Close("dtGLData")
+	F.Intrinsic.Control.EndIf
+	F.Data.DataTable.CreateFromSQL("dtGLData","conx",V.Local.sSQL,True)
+	
+	'Complete transaction reference number
+	F.Data.DataTable.Select("dtGLData","ARType = '11'",V.Local.sRet1)
+	F.Intrinsic.Control.If(V.Local.sRet1,<>,"***NORETURN***")
+		F.Intrinsic.String.Split(V.Local.sRet1,"*!*",V.Local.sRet1)
+		F.Intrinsic.Control.For(V.Local.i1,0,V.Local.sRet1.UBound,1)
+			V.Local.sReference.Set(V.DataTable.dtGLData(V.Local.sRet1(V.Local.i1)).Reference!FieldValTrim)
+			F.Intrinsic.String.Build("select reference from v_ar_open_items where customer = '{0}' and invoice = '{1}' and batch_num = '{2}' and batch_code = '11'",V.DataTable.dtGLData(V.Local.sRet1(V.Local.i1)).Customer!FieldValTrim,V.Local.sReference.PSQLFriendly,V.DataTable.dtGLData(V.Local.sRet1(V.Local.i1)).Batch!FieldValTrim,V.Local.sSQL)
+			F.ODBC.Connection!conx.OpenLocalRecordsetRO("rst",V.Local.sSQL)
+			F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,False)
+				F.Data.DataTable.SetValue("dtGLData",V.Local.sRet1(V.Local.i1),"Reference",V.ODBC.conx!rst.FieldValTrim!reference)
+			F.Intrinsic.Control.Else
+				F.ODBC.conx!rst.Close
+				F.Intrinsic.String.Build("select reference from v_ar_history where customer = '{0}' and invoice = '{1}' and batch_num = '{2}' and batch_code = '11'",V.DataTable.dtGLData(V.Local.sRet1(V.Local.i1)).Customer!FieldValTrim,V.Local.sReference.PSQLFriendly,V.DataTable.dtGLData(V.Local.sRet1(V.Local.i1)).Batch!FieldValTrim,V.Local.sSQL)
+				F.ODBC.Connection!conx.OpenLocalRecordsetRO("rst",V.Local.sSQL)
+				F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,False)
+					F.Data.DataTable.SetValue("dtGLData",V.Local.sRet1(V.Local.i1),"Reference",V.ODBC.conx!rst.FieldValTrim!reference)
+				F.Intrinsic.Control.EndIf
+			F.Intrinsic.Control.EndIf
+			F.ODBC.conx!rst.Close
+		F.Intrinsic.Control.Next(V.Local.i1)
+	F.Intrinsic.Control.EndIf
+	Gui.F_GLDetail.GsGCCust.Enabled(True)
+	Gui.F_GLDetail.cmdExcel.Visible(True)
+	F.Intrinsic.UI.CloseWaitDialog
+F.Intrinsic.Control.EndIf
+Program.Sub.cmdRefresh_Click.End
+
+Program.Sub.gvGL_Setup.Start
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","ARType","Visible",False)
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","Customer","Visible",False)
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","GLAcct","Visible",False)
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","D","Caption","Day")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","M","Caption","Month")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","Y","Caption","Year")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","Name","Caption","Customer Name")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","Reference","Caption","Reference No.")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","D","MinWidth","40")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","M","MinWidth","50")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","Y","MinWidth","50")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","Name","MinWidth","270")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","Batch","MinWidth","60")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","Reference","MinWidth","200")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","Debit","MinWidth","130")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","Credit","MinWidth","130")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","Balance","MinWidth","130")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","ARType","MinWidth","60")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","Customer","MinWidth","90")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","GLAcct","MinWidth","110")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","D","HeaderHAlignment","Center")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","M","HeaderHAlignment","Center")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","Y","HeaderHAlignment","Center")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","Name","HeaderHAlignment","Center")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","Batch","HeaderHAlignment","Center")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","Reference","HeaderHAlignment","Center")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","Debit","HeaderHAlignment","Center")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","Credit","HeaderHAlignment","Center")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","Balance","HeaderHAlignment","Center")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","ARType","HeaderHAlignment","Center")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","Customer","HeaderHAlignment","Center")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","GLAcct","HeaderHAlignment","Center")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","D","CellHAlignment","Center")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","M","CellHAlignment","Center")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","Y","CellHAlignment","Center")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","Batch","CellHAlignment","Center")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","Reference","CellHAlignment","Center")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","Debit","DisplayCustomNumeric","#,###,##0.00")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","Credit","DisplayCustomNumeric","#,###,##0.00")
+Gui.F_GLDetail.GsGCDetail.SetColumnProperty("gvGL","Balance","DisplayCustomNumeric","#,###,##0.00")
+Program.Sub.gvGL_Setup.End
+
+Program.Sub.GsGCCust_CellClick.Start
+V.Local.dBegDate.Declare(Date)
+V.Local.dEndDate.Declare(Date)
+V.Local.fBegBal.Declare
+V.Local.fBegBalH.Declare
+V.Local.fCredit.Declare
+V.Local.fDebit.Declare
+V.Local.i1.Declare
+V.Local.i2.Declare
+V.Local.iDay.Declare
+V.Local.iMonth.Declare
+V.Local.iYear.Declare
+V.Local.sCustName.Declare
+V.Local.sCustomer.Declare
+V.Local.sFilter.Declare
+V.Local.sRet.Declare
+V.Local.sSQL.Declare
+
+f.Intrinsic.Control.BlockEvents
+
+Gui.F_GLDetail.GsGCDetail.Visible(False)
+V.Local.dBegDate.Set(V.Screen.F_GLDetail!dtpBegDate.Value)
+F.Intrinsic.Control.If(V.DataTable.dtGLView.Exists,=,True)
+	F.Intrinsic.Control.If(V.DataView.dtGLView!dvGL.Exists,=,True)
+		F.Data.DataView.Close("dtGLView","dvGL")
+	F.Intrinsic.Control.EndIf
+	F.Data.DataTable.Close("dtGLView")
+F.Intrinsic.Control.EndIf
+V.Local.sCustomer.Set(V.DataTable.dtCustomer(V.Args.RowIndex).Customer!FieldValTrim)
+F.Intrinsic.String.Build("Customer = '{0}'",V.Local.sCustomer.Trim,V.Local.sFilter)
+F.Data.DataTable.Select("dtGLData",V.Local.sFilter,V.Local.sRet)
+F.Intrinsic.Control.If(V.Local.sRet,<>,"***NORETURN***")
+	F.Intrinsic.UI.InvokeWaitDialog("Loading customer GL data","GL Detail by Customer (AR)")
+	F.Intrinsic.String.Split(V.Local.sRet,"*!*",V.Local.sRet)
+	'Clone dtGLData
+	F.Data.DataTable.Clone("dtGLData","dtGLView",True)
+	F.Data.DataTable.AddColumn("dtGLView","Balance","Float")
+	'Retrieve customer beginning balance
+	F.Intrinsic.String.Build("select sum(amount_cmpny) from v_gl_AR_detail where post_date < '{0}' and cust = '{1}' and gl_number = '{2}'",V.Local.dBegDate.PervasiveDate,V.Local.sCustomer.Trim,V.DataTable.dtGLData(V.Local.sRet(0)).GLAcct!FieldValTrim,V.Local.sSQL)
+	F.ODBC.Connection!conx.ExecuteAndReturn(V.Local.sSQL,V.Local.fBegBal)
+	F.Intrinsic.Math.Add(V.Local.fBegBal,0,V.Local.fBegBal)
+	F.Intrinsic.String.Build("select sum(amount_cmpny) from v_gl_AR_detail_hist where post_date < '{0}' and cust = '{1}' and gl_number = '{2}'",V.Local.dBegDate.PervasiveDate,V.Local.sCustomer.Trim,V.DataTable.dtGLData(V.Local.sRet(0)).GLAcct!FieldValTrim,V.Local.sSQL)
+	F.ODBC.Connection!conx.ExecuteAndReturn(V.Local.sSQL,V.Local.fBegBalH)
+	F.Intrinsic.Math.Add(V.Local.fBegBalH,0,V.Local.fBegBalH)
+	F.Intrinsic.Math.Add(V.Local.fBegBal,V.Local.fBegBalH,V.Local.fBegBal)
+	F.Intrinsic.Control.If(V.Local.fBegBal,>=,0)
+		V.Local.fDebit.Set(V.Local.fBegBal)
+		V.Local.fCredit.Set(0)
+	F.Intrinsic.Control.Else
+		V.Local.fDebit.Set(0)
+		V.Local.fCredit.Set(V.Local.fBegBal)
+	F.Intrinsic.Control.EndIf
+	'Merge data from dtGLData for this customer into dtGLView
+	F.Intrinsic.Date.Day(V.Local.dBegDate,V.Local.iDay)
+	F.Intrinsic.Date.Month(V.Local.dBegDate,V.Local.iMonth)
+	F.Intrinsic.Date.Year(V.Local.dBegDate,V.Local.iYear)
+	F.Data.DataTable.AddRow("dtGLView","D",V.Local.iDay,"M",V.Local.iMonth,"Y",V.Local.iYear,"Name","BALANCE B/F","Batch","","Reference","","Debit",V.Local.fDebit,"Credit",V.Local.fCredit,"Customer",V.Local.sCustomer.Trim)
+	F.Data.DataTable.Merge("dtGLData","dtGLView",True,1)
+	'Summarize at the bottom
+	F.Data.DataTable.Compute("dtGLView","SUM(Debit)",V.Local.sFilter,V.Local.fDebit)
+	F.Data.DataTable.Compute("dtGLView","SUM(Credit)",V.Local.sFilter,V.Local.fCredit)
+	F.Data.DataTable.AddRow("dtGLView","Name","CLOSING BALANCE","Debit",V.Local.fDebit,"Credit",V.Local.fCredit,"Customer",V.Local.sCustomer.Trim)
+	F.Data.DataView.Create("dtGLView","dvGL",22,V.Local.sFilter,"")
+	F.Intrinsic.Control.For(V.Local.i1,1,V.DataView.dtGLView!dvGL.RowCount--,1)
+		F.Intrinsic.Control.If(V.Local.i1,<>,V.DataView.dtGLView!dvGL.RowCount--)
+			F.Intrinsic.Math.Add(V.Local.fBegBal,V.DataView.dtGLView!dvGL(V.Local.i1).Debit!FieldValFloat,V.DataView.dtGLView!dvGL(V.Local.i1).Credit!FieldValFloat,V.Local.fBegBal)
+			F.Data.DataView.SetValue("dtGLView","dvGL",V.Local.i1,"Balance",V.Local.fBegBal)
+		F.Intrinsic.Control.Else
+			F.Data.DataView.SetValue("dtGLView","dvGL",V.Local.i1,"Balance",V.Local.fBegBal)
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.Next(V.Local.i1)
+	
+	Gui.F_GLDetail.GsGCDetail.AddGridviewFromDataview("gvGL","dtGLView","dvGL")
+	Gui.F_GLDetail.GsGCDetail.MainView("gvGL")
+	F.Intrinsic.Control.CallSub(gvgl_setup)
+	Gui.F_GLDetail.GsGCDetail.Visible(True)
+	F.Intrinsic.UI.CloseWaitDialog
+F.Intrinsic.Control.Else
+	F.Intrinsic.UI.Msgbox("No GL data for the selected customer on the selected date range","GL Detail by Customer (AR)")
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.UnBlockEvents
+Program.Sub.GsGCCust_CellClick.End
+
+Program.Sub.cmdExcel_Click.Start
+V.Local.bExist.Declare
+
+V.Local.dBegDate.Declare(Date)
+
+V.Local.fBalance.Declare
+V.Local.fBegBal.Declare
+V.Local.fBegBalH.Declare
+V.Local.fCredit.Declare
+V.Local.fDebit.Declare
+V.Local.fTCredit.Declare
+V.Local.fTDebit.Declare
+
+V.Local.i1.Declare
+V.Local.i2.Declare
+V.Local.iDay.Declare
+V.Local.iMonth.Declare
+V.Local.iRow.Declare
+V.Local.iUpdate.Declare
+V.Local.iYear.Declare
+
+V.Local.sEndDate.Declare
+V.Local.sFileName.Declare
+V.Local.sFilePath.Declare
+V.Local.sFilter.Declare
+V.Local.sMessage.Declare
+V.Local.sRet.Declare
+V.Local.sSQL.Declare
+V.Local.sTitle.Declare
+V.Local.sFileExport.Declare
+V.Local.sControl.Declare
+V.Local.bFileLocked.Declare
+V.Local.sMsg.Declare
+
+F.Automation.MSExcel.CheckPresence(V.Local.bExist)
+
+F.Intrinsic.Control.If(V.Local.bExist,=,False)
+'	F.Intrinsic.UI.Msgbox("Cannot export to excel. MS Excel is not found in this PC","GL Detail by Customer (AR)")
+'	F.Intrinsic.Control.ExitSub
+	F.Intrinsic.String.Build("{0}\GAB_6249_{1}_Export.csv",V.Caller.LocalGssTempDir,V.Local.sControl,V.Local.sFileExport)
+	F.Intrinsic.File.IsFileLocked(V.Local.sFileExport,V.Local.bFileLocked)
+	F.Intrinsic.Control.If(V.Local.bFileLocked)
+		F.Intrinsic.String.Build("File is already open. Please close and export again.{0}File: {1}",V.Ambient.NewLine,V.Local.sFileExport,V.Local.sMsg)
+		F.Intrinsic.UI.Msgbox(V.Local.sMsg,"File In Use")
+	F.Intrinsic.Control.Else
+		Gui.F_GLDetail.GsGCDetail.Export(V.Local.sFileExport,"csv")
+	F.Intrinsic.Control.EndIf
+	F.Intrinsic.Task.ShellExec(0,"",V.Local.sFileExport,"","",1)	
+
+F.Intrinsic.Control.Else
+	F.Intrinsic.String.Build("{0}\GAB_6249_{1}_Export.xlsx",V.Caller.LocalGssTempDir,V.Local.sControl,V.Local.sFileExport)
+	F.Intrinsic.File.IsFileLocked(V.Local.sFileExport,V.Local.bFileLocked)
+	F.Intrinsic.Control.If(V.Local.bFileLocked)
+		F.Intrinsic.String.Build("File is already open. Please close and export again.{0}File: {1}",V.Ambient.NewLine,V.Local.sFileExport,V.Local.sMsg)
+		F.Intrinsic.UI.Msgbox(V.Local.sMsg,"File In Use")
+	F.Intrinsic.Control.Else
+		Gui.F_GLDetail.GsGCDetail.Export(V.Local.sFileExport,"xlsx")
+		F.Intrinsic.Task.ShellExec(0,"",V.Local.sFileExport,"","",1)
+	F.Intrinsic.Control.EndIf
+
+'	F.Intrinsic.UI.ShowSaveFileDialog("",".xlsx|",V.Local.sFilePath)
+'	F.Intrinsic.Control.If(V.Local.sFilePath,<>,"***CANCEL***")
+'		F.Intrinsic.UI.InvokeWaitDialog("Exporting data into Excel","GL Detail by Customer (AR)")
+'		F.Intrinsic.String.Concat(V.Local.sFilePath,".xlsx",V.Local.sFileName)
+'		F.Automation.MSExcel.CreateAppObject("MSExcel")
+'		F.Automation.MSExcel.CreateWorkbook("MSExcel","Excel",V.Local.sFileName)
+'		F.Automation.MSExcel.OpenWorksheet("Excel","Sheet",1)
+'		'Excel sheet title
+'		F.Automation.MSExcel.WriteCell("Sheet",1,1,"SETSU PRECISION TECHNOLOGY (M) SDN BHD")
+'		V.Local.dBegDate.Set(V.Screen.F_GLDetail!dtpBegDate.Value)
+'		F.Intrinsic.Date.GLPeriodFromDate(V.Local.dBegDate,V.Local.sRet)
+'		F.Intrinsic.String.Split(V.Local.sRet,"*!*",V.Local.sRet)
+'		F.Intrinsic.String.Build("select end_date from v_gl_calendar where start_year = '{0}' and period = '12'",V.Local.sRet(1).Trim,V.Local.sSQL)
+'		F.ODBC.Connection!conx.OpenLocalRecordsetRO("rst",V.Local.sSQL)
+'		F.Intrinsic.String.Format(V.ODBC.conx!rst.FieldVal!end_date,"d mmmm yyyy",V.Local.sEndDate)
+'		F.ODBC.conx!rst.Close
+'		F.Intrinsic.String.Build("TRADE DEBTOR LEDGER FOR THE YEAR ENDED {0}",V.Local.sEndDate,V.Local.sTitle)
+'		F.Automation.MSExcel.WriteCell("Sheet",2,1,V.Local.sTitle)
+'		V.Local.iRow.Set(2)
+'		F.Intrinsic.Control.For(V.Local.i1,0,V.DataTable.dtCustomer.RowCount--,1)
+'			F.Intrinsic.String.Build("Customer = '{0}'",V.DataTable.dtCustomer(V.Local.i1).Customer!FieldValTrim,V.Local.sFilter)
+'			F.Data.DataTable.Select("dtGLData",V.Local.sFilter,V.Local.sRet)
+'			F.Intrinsic.Control.If(V.Local.sRet,<>,"***NORETURN***")
+'				F.Intrinsic.Math.Add(V.Local.i1,1,V.Local.iUpdate)
+'				F.Intrinsic.String.Build("Exporting Customer: {0}",V.DataTable.dtCustomer(V.Local.i1).Name!FieldValTrim,V.Local.sMessage)
+'				F.Intrinsic.UI.ChangeWaitStatus(V.Local.sMessage,V.Local.iUpdate,1,V.DataTable.dtCustomer.RowCount)
+'				'Setup title
+'				F.Intrinsic.Math.Add(V.Local.iRow,2,V.Local.iRow)
+'				F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,1,"Day")
+'				F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,2,"Month")
+'				F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,3,"Year")
+'				F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,4,"Customer")
+'				F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,5,"Batch")
+'				F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,6,"Reference No.")
+'				F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,7,"Debit")
+'				F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,8,"Credit")
+'				F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,9,"Balance")
+'				'Beginning balance
+'				F.Intrinsic.Math.Add(V.Local.iRow,1,V.Local.iRow)
+'				F.Intrinsic.String.Split(V.Local.sRet,"*!*",V.Local.sRet)
+'				F.Intrinsic.String.Build("select sum(amount_cmpny) from v_gl_AR_detail where post_date_sql < '{0}' and cust = '{1}' and gl_number = '{2}'",V.Local.dBegDate.PervasiveDate,V.DataTable.dtCustomer(V.Local.i1).Customer!FieldValTrim,V.DataTable.dtGLData(V.Local.sRet(0)).GLAcct!FieldValTrim,V.Local.sSQL)
+'				F.ODBC.Connection!conx.ExecuteAndReturn(V.Local.sSQL,V.Local.fBegBal)
+'				F.Intrinsic.Math.Add(V.Local.fBegBal,0,V.Local.fBegBal)
+'				F.Intrinsic.String.Build("select sum(amount_cmpny) from v_gl_AR_detail_hist where post_date_sql < '{0}' and cust = '{1}' and gl_number = '{2}'",V.Local.dBegDate.PervasiveDate,V.DataTable.dtCustomer(V.Local.i1).Customer!FieldValTrim,V.DataTable.dtGLData(V.Local.sRet(0)).GLAcct!FieldValTrim,V.Local.sSQL)
+'				F.ODBC.Connection!conx.ExecuteAndReturn(V.Local.sSQL,V.Local.fBegBalH)
+'				F.Intrinsic.Math.Add(V.Local.fBegBalH,0,V.Local.fBegBalH)
+'				F.Intrinsic.Math.Add(V.Local.fBegBal,V.Local.fBegBalH,V.Local.fBegBal)
+'				F.Intrinsic.Control.If(V.Local.fBegBal,>=,0)
+'					V.Local.fDebit.Set(V.Local.fBegBal)
+'					V.Local.fCredit.Set(0)
+'				F.Intrinsic.Control.Else
+'					V.Local.fDebit.Set(0)
+'					V.Local.fCredit.Set(V.Local.fBegBal)
+'				F.Intrinsic.Control.EndIf
+'				F.Intrinsic.Date.Day(V.Local.dBegDate,V.Local.iDay)
+'				F.Intrinsic.Date.Month(V.Local.dBegDate,V.Local.iMonth)
+'				F.Intrinsic.Date.Year(V.Local.dBegDate,V.Local.iYear)
+'				F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,1,V.Local.iDay)
+'				F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,2,V.Local.iMonth)
+'				F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,3,V.Local.iYear)
+'				F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,4,"BALANCE B/F")
+'				F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,7,V.Local.fDebit)
+'				F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,8,V.Local.fCredit)
+'				'Exporting entries
+'				V.Local.fBalance.Set(V.Local.fBegBal)
+'				F.Intrinsic.Math.Add(V.Local.iRow,1,V.Local.iRow)
+'				F.Data.DataView.Create("dtGLData","dvGL",22,V.Local.sFilter,"Y ASC, M ASC, D ASC")
+'				F.Intrinsic.Control.For(V.Local.i2,0,V.DataView.dtGLData!dvGL.RowCount--,1)
+'					F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,1,V.DataView.dtGLData!dvGL(V.Local.i2).D!FieldVal)
+'					F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,2,V.DataView.dtGLData!dvGL(V.Local.i2).M!FieldVal)
+'					F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,3,V.DataView.dtGLData!dvGL(V.Local.i2).Y!FieldVal)
+'					F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,4,V.DataView.dtGLData!dvGL(V.Local.i2).Name!FieldValTrim)
+'					F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,5,V.DataView.dtGLData!dvGL(V.Local.i2).Batch!FieldValTrim)
+'					F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,6,V.DataView.dtGLData!dvGL(V.Local.i2).Reference!FieldValTrim)
+'					F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,7,V.DataView.dtGLData!dvGL(V.Local.i2).Debit!FieldVal)
+'					F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,8,V.DataView.dtGLData!dvGL(V.Local.i2).Credit!FieldVal)
+'					F.Intrinsic.Math.Add(V.Local.fBalance,V.DataView.dtGLData!dvGL(V.Local.i2).Debit!FieldValFloat,V.DataView.dtGLDatadvGL'(V.Local.i2).Credit!FieldValFloat,V.Local.fBalance)
+'					F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,9,V.Local.fBalance)
+'					F.Intrinsic.Math.Add(V.Local.iRow,1,V.Local.iRow)
+'				F.Intrinsic.Control.Next(V.Local.i2)
+'				F.Data.DataView.Close("dtGLData","dvGL")
+'				F.Data.DataTable.Compute("dtGLData","SUM(Debit)",V.Local.sFilter,V.Local.fTDebit)
+'				F.Data.DataTable.Compute("dtGLData","SUM(Credit)",V.Local.sFilter,V.Local.fTCredit)
+'				F.Intrinsic.Math.Add(V.Local.fDebit,V.Local.fTDebit,V.Local.fDebit)
+'				F.Intrinsic.Math.Add(V.Local.fCredit,V.Local.fTCredit,V.Local.fCredit)
+'				F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,4,"CLOSING BALANCE")
+'				F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,7,V.Local.fDebit)
+'				F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,8,V.Local.fCredit)
+'				F.Automation.MSExcel.WriteCell("Sheet",V.Local.iRow,9,V.Local.fBalance)
+'			F.Intrinsic.Control.EndIf
+'		F.Intrinsic.Control.Next(V.Local.i1)
+		
+'		F.Automation.MSExcel.SaveWorkbook("Excel")
+'		F.Automation.MSExcel.DestroyAllObjects("MSExcel","Excel","Sheet")
+'		F.Intrinsic.UI.CloseWaitDialog
+'		F.Intrinsic.UI.Msgbox("Excel export is complete","GL Detail by Customer (AR)")
+'	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.EndIf
+Program.Sub.cmdExcel_Click.End
+
+Program.Sub.ResizeScreen.Start
+V.Local.fH.Declare
+V.Local.fdX.Declare
+V.Local.fdY.Declare
+V.Local.fNewHeight.Declare
+V.Local.fNewWidth.Declare
+V.Local.fNewX.Declare
+V.Local.fNewY.Declare
+'Limit minimum screen size
+F.Intrinsic.Control.If(V.Screen.F_GLDetail.Width,<,V.Global.fMinWidth)
+F.Intrinsic.Control.Andif(V.Screen.F_GLDetail.Height,<,V.Global.fMinHeight)
+	Gui.F_GLDetail..Size(V.Global.fMinWidth,V.Global.fMinHeight)
+F.Intrinsic.Control.Else
+	F.Intrinsic.Control.If(V.Screen.F_GLDetail.Width,<,V.Global.fMinWidth)
+		Gui.F_GLDetail..Size(V.Global.fMinWidth,V.Screen.F_GLDetail.Height)
+	F.Intrinsic.Control.ElseIf(V.Screen.F_GLDetail.Height,<,V.Global.fMinHeight)
+		Gui.F_GLDetail..Size(V.Screen.F_GLDetail.Width,V.Global.fMinHeight)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Math.Sub(V.Screen.F_GLDetail.Height,V.Screen.F_GLDetail!GsGCDetail.Top,500,V.Local.fNewHeight)
+F.Intrinsic.Math.Sub(V.Screen.F_GLDetail.Width,V.Screen.F_GLDetail!GsGCDetail.Left,300,V.Local.fNewWidth)
+Gui.F_GLDetail.GsGCDetail.Size(V.Local.fNewWidth,V.Local.fNewHeight)
+V.Global.fRefHeight.Set(V.Screen.F_GLDetail.Height)
+V.Global.fRefWidth.Set(V.Screen.F_GLDetail.Width)
+Program.Sub.ResizeScreen.End
+
+Program.Sub.Comments.Start
+${$0$}$GL Detail per Customer$}$MHERTANTO$}$2/5/2017 2:14:09 PM$}$True
+${$3$}$0$}$$}$0$}$-1$}$$}$12:00:00 AM$}$Update ORDER_SUFFIX in PRT_LASER_INVOICE for line item when an invoice comprises of multiple shipments.
+${$5$}$2.0.0.0$}$2
+${$6$}$tdjohan$}$20230519100516769$}$8rAQhOSvlohpQhMDm1j544LwmwXnRbkhJvIHIV5R0vkP25UJ8qG3y/svX4NuA95769okW0sPVqk=
+Program.Sub.Comments.End
